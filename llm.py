@@ -2005,7 +2005,7 @@ class easy_LLM_local_loader:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "model_name_or_path": (LLM_list, {"default": "","tooltip": "Select your model files from custom_nodes\comfyui_LLM_party\model\LLM."}),
+                "model_name_or_path": (LLM_list, {"default": "","tooltip": r"Select your model files from custom_nodes\comfyui_LLM_party\model\LLM."}),
                 "device": (
                     ["auto", "cuda", "cpu", "mps"],
                     {
@@ -2036,7 +2036,7 @@ class easy_LLM_local_loader:
         "The loaded model.",
         "The loaded tokenizer."
     )
-    DESCRIPTION = "Load a local model from custom_nodes\comfyui_LLM_party\model\LLM."
+    DESCRIPTION = r"Load a local model from custom_nodes\comfyui_LLM_party\model\LLM."
 
     FUNCTION = "chatbot"
 
