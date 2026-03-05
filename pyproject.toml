@@ -1,7 +1,7 @@
 [project]
 name = "comfyui_llm_party"
 description = "A set of block-based LLM agent node libraries designed for ComfyUI.This project aims to develop a complete set of nodes for LLM workflow construction based on comfyui. It allows users to quickly and conveniently build their own LLM workflows and easily integrate them into their existing SD workflows."
-version = "1.4.3"
+version = "1.4.4"
 license = {file = "LICENSE"}
 dependencies = [
     "beautifulsoup4",
@@ -66,7 +66,7 @@ dependencies = [
     "redis>=5.3.0",
     "aisuite[all]>=0.1.11",
     "fish-audio-sdk>=2025.4.2",
-    "httpx<=0.27.2",
+    "httpx>=0.27.0",
     "mcp>=1.6.0",
     "qwen-vl-utils[decord]>=0.0.11",
     "attrdict>=2.0.1",

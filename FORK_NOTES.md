@@ -20,8 +20,11 @@ The original repo's last commit was **Sep 8, 2025**. This fork aims to:
 - [x] Fix #187 + #204: Widget validation errors on old workflows (`is_enable_system_role`, `conversation_rounds`, `historical_record` coercion)
 - [x] Fix #232: `show_text_party` shows stale stacked blocks when UI text carries list payload — render latest item only
 - [x] Fix #230: GPT-5 chat/completions fails because node always sends `max_tokens` — remapped to `max_completion_tokens` for `gpt-5*` models
-- [ ] Fix #222: numpy 2.0 compatibility (`np.float_` → `np.float64`)
-- [ ] Fix #224: macOS install issues
+- [x] Fix #191: Janus Pro (`ds_chat`) ignores seed and temperature — `do_sample` now respects temperature; `seed` extracted from extra_parameters and applied via `torch.manual_seed()`
+- [x] Fix #191 (all local models): `seed` kwarg in extra_parameters passed to HuggingFace `.generate()` caused "model_kwargs not used" errors — intercepted in all four local chat functions (`llm_chat`, `llama_chat`, `qwen_chat`, `ds_chat`)
+- [x] Fix #190: `httpx<=0.27.2` pin removed — aisuite ≥0.1.12 supports httpx 0.28+; updated to `httpx>=0.27.0`
+- [ ] Fix #222: numpy 2.0 compatibility — transitive dependency via spacy/cupy; not present in our codebase, requires upstream langchain-text-splitters fix
+- [ ] Fix #224: macOS install issues (platform not applicable)
 
 ### New Features Planned
 - [ ] Native Grok-3 / Grok-3-mini model presets

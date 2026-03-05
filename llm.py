@@ -1680,10 +1680,27 @@ class LLM:
         return hash_value
 
 
+def _pop_seed(extra_parameters: dict) -> dict:
+    """Extract 'seed' from extra_parameters, set torch manual seed if present.
+
+    HuggingFace generate() does not accept a 'seed' kwarg directly.
+    Call this before every model.generate() / model.language_model.generate() call
+    to avoid the 'model_kwargs are not used' warning/error.
+    """
+    params = dict(extra_parameters)
+    seed = params.pop("seed", None)
+    if seed is not None:
+        torch.manual_seed(int(seed))
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(int(seed))
+    return params
+
+
 def llm_chat(
     model, tokenizer, user_prompt, history, device, max_length, role="user", temperature=0.7, **extra_parameters
 ):
     history.append({"role": role, "content": user_prompt.strip()})
+    gen_params = _pop_seed(extra_parameters)
     # 检查是否已经设置了 chat_template
     if not hasattr(tokenizer, 'chat_template') or tokenizer.chat_template is None:
         # 如果没有设置 chat_template，尝试使用 default_chat_template
@@ -1698,7 +1715,7 @@ def llm_chat(
                 do_sample=True,
                 temperature=temperature,
                 eos_token_id=tokenizer.eos_token_id,
-                **extra_parameters,  # Add the eos_token_id parameter
+                **gen_params,
             )
             response = tokenizer.decode(generated_ids[0], skip_special_tokens=True)
             history.append({"role": "assistant", "content": response})
@@ -1711,7 +1728,7 @@ def llm_chat(
         do_sample=True,
         temperature=temperature,
         eos_token_id=tokenizer.eos_token_id,
-        **extra_parameters,  # Add the eos_token_id parameter
+        **gen_params,
     )
     generated_ids = [
         output_ids[len(input_ids) :] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
@@ -1746,7 +1763,8 @@ def llama_chat(
         inputs = processor(text=input_text, return_tensors="pt").to(device)
     
 
-    output = model.generate(**inputs, max_new_tokens=max_length, temperature=temperature, **extra_parameters)
+    gen_params = _pop_seed(extra_parameters)
+    output = model.generate(**inputs, max_new_tokens=max_length, temperature=temperature, **gen_params)
     response = processor.decode(output[0], skip_special_tokens=True)
     # 使用正则表达式提取最后一个助手的回答
     matches = re.findall(r'assistant\s*(.*?)(?=\s*(?:system|user|$))', response, re.DOTALL)
@@ -1811,8 +1829,9 @@ def qwen_chat(
                     break
 
     # 生成输出
+    gen_params = _pop_seed(extra_parameters)
     with torch.no_grad():
-        generated_ids = model.generate(**inputs, max_new_tokens=max_length, temperature=temperature, **extra_parameters)
+        generated_ids = model.generate(**inputs, max_new_tokens=max_length, temperature=temperature, **gen_params)
         generated_ids_trimmed = [
             out_ids[len(in_ids):] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
         ]
@@ -1883,17 +1902,18 @@ def ds_chat(
         # # run image encoder to get the image embeddings
         inputs_embeds = model.prepare_inputs_embeds(**prepare_inputs)
         # # run the model to get the response
+        gen_params = _pop_seed(extra_parameters)
         outputs = model.language_model.generate(
             inputs_embeds=inputs_embeds,
             attention_mask=prepare_inputs.attention_mask,
             pad_token_id=tokenizer.eos_token_id,
             bos_token_id=tokenizer.bos_token_id,
             eos_token_id=tokenizer.eos_token_id,
-            max_new_tokens=max_length, 
-            temperature=temperature,
-            do_sample=False,
+            max_new_tokens=max_length,
+            temperature=temperature if temperature > 0 else 1.0,
+            do_sample=(temperature > 0),
             use_cache=True,
-            **extra_parameters,
+            **gen_params,
         )
 
         answer = tokenizer.decode(outputs[0].cpu().tolist(), skip_special_tokens=True)
