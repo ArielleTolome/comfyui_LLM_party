@@ -17,7 +17,12 @@ import traceback
 # import google.generativeai as genai
 import numpy as np
 import openai
-import aisuite as ai
+try:
+    import aisuite as ai
+    AISUITE_AVAILABLE = True
+except ImportError:
+    ai = None
+    AISUITE_AVAILABLE = False
 import requests
 import torch
 from PIL import Image
@@ -725,6 +730,11 @@ class Chat:
 
 class aisuite_Chat:
     def __init__(self, provider,model_name, apikey, baseurl,aws_access_key_id,aws_secret_access_key, aws_region_name,google_project_id,google_region,google_application_credentials,hf_api_token) -> None:
+        if not AISUITE_AVAILABLE:
+            raise ImportError(
+                "aisuite is not installed. Install it with: pip install \"aisuite[all]\"\n"
+                "Then restart ComfyUI."
+            )
         self.model_name = f"{provider}:{model_name}"
         self.apikey = apikey
         self.baseurl = baseurl
@@ -2017,9 +2027,14 @@ class LLM_local_loader:
             elif dtype == "bfloat16":
                 model_kwargs['torch_dtype'] = torch.bfloat16
             elif dtype in ["int8", "int4"]:
+                if not torch.cuda.is_available():
+                    raise ValueError(
+                        f"dtype='{dtype}' (bitsandbytes quantization) requires a CUDA GPU. "
+                        f"Your current device is '{device}'. Please select float16 or bfloat16 instead."
+                    )
                 model_kwargs['quantization_config'] = BitsAndBytesConfig(load_in_8bit=(dtype == "int8"), load_in_4bit=(dtype == "int4"))
 
-            config = AutoConfig.from_pretrained(model_name_or_path, **model_kwargs)
+            config = AutoConfig.from_pretrained(model_name_or_path, trust_remote_code=True)
             self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=True)
 
             if config.model_type == "t5":
@@ -2136,9 +2151,14 @@ class easy_LLM_local_loader:
             elif dtype == "bfloat16":
                 model_kwargs['torch_dtype'] = torch.bfloat16
             elif dtype in ["int8", "int4"]:
+                if not torch.cuda.is_available():
+                    raise ValueError(
+                        f"dtype='{dtype}' (bitsandbytes quantization) requires a CUDA GPU. "
+                        f"Your current device is '{device}'. Please select float16 or bfloat16 instead."
+                    )
                 model_kwargs['quantization_config'] = BitsAndBytesConfig(load_in_8bit=(dtype == "int8"), load_in_4bit=(dtype == "int4"))
 
-            config = AutoConfig.from_pretrained(model_name_or_path, **model_kwargs)
+            config = AutoConfig.from_pretrained(model_name_or_path, trust_remote_code=True)
             self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=True)
 
             if config.model_type == "t5":
