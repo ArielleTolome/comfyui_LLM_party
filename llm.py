@@ -574,7 +574,7 @@ class Chat:
                                         print(chunk.choices[0].delta.content, end="", flush=True)
                                         response_content = response_content + chunk.choices[0].delta.content
                 else:
-                    response_content = response.choices[0].message.content
+                    response_content = response.choices[0].message.content or ""
                     print(response_content)
                     while response.choices[0].message.tool_calls:
                         assistant_message = response.choices[0].message
@@ -618,7 +618,7 @@ class Chat:
                         if hasattr(response.choices[0].message, 'reasoning_content') and response.choices[0].message.reasoning_content:
                             reasoning_content = response.choices[0].message.reasoning_content
                             print(reasoning_content)
-                        response_content = response.choices[0].message.content
+                        response_content = response.choices[0].message.content or ""
                         print(response_content)
             elif is_tools_in_sys_prompt == "enable":
                 response = openai_client.chat.completions.create(
@@ -628,7 +628,7 @@ class Chat:
                     max_tokens=max_length,
                     **extra_parameters,
                 )
-                response_content = response.choices[0].message.content
+                response_content = response.choices[0].message.content or ""
                 # 正则表达式匹配
                 pattern = r'\{\s*"tool":\s*"(.*?)",\s*"parameters":\s*\{(.*?)\}\s*\}'
                 while re.search(pattern, response_content, re.DOTALL) != None:
@@ -661,7 +661,7 @@ class Chat:
                     if hasattr(response.choices[0].message, 'reasoning_content') and response.choices[0].message.reasoning_content:
                         reasoning_content = response.choices[0].message.reasoning_content
                         print(reasoning_content)
-                    response_content = response.choices[0].message.content
+                    response_content = response.choices[0].message.content or ""
                     print(response_content)
             else:
                 response = openai_client.chat.completions.create(
@@ -688,8 +688,11 @@ class Chat:
                     if hasattr(response.choices[0].message, 'reasoning_content') and response.choices[0].message.reasoning_content:
                         reasoning_content = response.choices[0].message.reasoning_content
                         print(reasoning_content)
-                    response_content = response.choices[0].message.content
+                    response_content = response.choices[0].message.content or ""
                     print(response_content)
+            # Guard against None response_content (Ollama null, Gemini edge cases - issues #227 #219)
+            if response_content is None:
+                response_content = ""
             # 使用正则表达式，提取response_content中<think>到</think>之间的内容到reasoning_content，之外的内容到response_content
             pattern = r'<think>(.*?)</think>'
             match = re.search(pattern, response_content, re.DOTALL)
@@ -945,7 +948,7 @@ class aisuite_Chat:
                                         print(chunk.choices[0].delta.content, end="", flush=True)
                                         response_content = response_content + chunk.choices[0].delta.content
                 else:
-                    response_content = response.choices[0].message.content
+                    response_content = response.choices[0].message.content or ""
                     print(response_content)
                     while response.choices[0].message.tool_calls:
                         assistant_message = response.choices[0].message
@@ -989,7 +992,7 @@ class aisuite_Chat:
                         if hasattr(response.choices[0].message, 'reasoning_content') and response.choices[0].message.reasoning_content:
                             reasoning_content = response.choices[0].message.reasoning_content
                             print(reasoning_content)
-                        response_content = response.choices[0].message.content
+                        response_content = response.choices[0].message.content or ""
                         print(response_content)
             elif is_tools_in_sys_prompt == "enable":
                 response = openai_client.chat.completions.create(
@@ -999,7 +1002,7 @@ class aisuite_Chat:
                     max_tokens=max_length,
                     **extra_parameters,
                 )
-                response_content = response.choices[0].message.content
+                response_content = response.choices[0].message.content or ""
                 # 正则表达式匹配
                 pattern = r'\{\s*"tool":\s*"(.*?)",\s*"parameters":\s*\{(.*?)\}\s*\}'
                 while re.search(pattern, response_content, re.DOTALL) != None:
@@ -1032,7 +1035,7 @@ class aisuite_Chat:
                     if hasattr(response.choices[0].message, 'reasoning_content') and response.choices[0].message.reasoning_content:
                         reasoning_content = response.choices[0].message.reasoning_content
                         print(reasoning_content)
-                    response_content = response.choices[0].message.content
+                    response_content = response.choices[0].message.content or ""
                     print(response_content)
             else:
                 response = openai_client.chat.completions.create(
@@ -1058,8 +1061,11 @@ class aisuite_Chat:
                     if hasattr(response.choices[0].message, 'reasoning_content') and response.choices[0].message.reasoning_content:
                         reasoning_content = response.choices[0].message.reasoning_content
                         print(reasoning_content)
-                    response_content = response.choices[0].message.content
+                    response_content = response.choices[0].message.content or ""
                     print(response_content)
+            # Guard against None response_content (Ollama null, Gemini edge cases - issues #227 #219)
+            if response_content is None:
+                response_content = ""
             # 使用正则表达式，提取response_content中<think>到</think>之间的内容到reasoning_content，之外的内容到response_content
             pattern = r'<think>(.*?)</think>'
             match = re.search(pattern, response_content, re.DOTALL)
@@ -1413,6 +1419,16 @@ class LLM:
         img_URL=None,
         stream=False,
     ):
+        # Backward-compatibility: coerce empty/invalid conversation_rounds to int
+        if conversation_rounds is None or conversation_rounds == "":
+            conversation_rounds = 100
+        try:
+            conversation_rounds = int(conversation_rounds)
+        except (ValueError, TypeError):
+            conversation_rounds = 100
+        # Backward-compatibility: historical_record None → ""
+        if historical_record is None:
+            historical_record = ""
         if not is_enable:
             return (
                 None,
@@ -2005,7 +2021,7 @@ class easy_LLM_local_loader:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "model_name_or_path": (LLM_list, {"default": "","tooltip": "Select your model files from custom_nodes\comfyui_LLM_party\model\LLM."}),
+                "model_name_or_path": (LLM_list, {"default": "","tooltip": r"Select your model files from custom_nodes\comfyui_LLM_party\model\LLM."}),
                 "device": (
                     ["auto", "cuda", "cpu", "mps"],
                     {
@@ -2036,7 +2052,7 @@ class easy_LLM_local_loader:
         "The loaded model.",
         "The loaded tokenizer."
     )
-    DESCRIPTION = "Load a local model from custom_nodes\comfyui_LLM_party\model\LLM."
+    DESCRIPTION = r"Load a local model from custom_nodes\comfyui_LLM_party\model\LLM."
 
     FUNCTION = "chatbot"
 
@@ -2229,6 +2245,15 @@ class LLM_local:
         user_history=None,
         is_enable_system_role="enable",
     ):
+        # Backward-compatibility: old workflows saved is_enable_system_role as a boolean
+        if isinstance(is_enable_system_role, bool):
+            is_enable_system_role = "enable" if is_enable_system_role else "disable"
+        # Normalize string booleans (e.g. "[False, True]" from old widget serialization)
+        if isinstance(is_enable_system_role, str) and is_enable_system_role not in ("enable", "disable"):
+            is_enable_system_role = "enable"
+        # Backward-compatibility: historical_record used to default to None, now uses ""
+        if historical_record is None:
+            historical_record = ""
         if not is_enable:
             return (
                 None,
