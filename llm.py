@@ -57,7 +57,22 @@ from .tools.api_tool import (
     parameter_function,
     use_api_tool,
 )
-from .tools.check_web import check_web, check_web_tool
+try:
+    from .tools.check_web import check_web, check_web_tool
+except Exception as _check_web_err:
+    import warnings
+    warnings.warn(
+        f"check_web tool disabled (import failed: {_check_web_err}). "
+        "This is usually caused by numpy 2.0 + spacy/langchain-text-splitters incompatibility. "
+        "Run: pip install 'numpy<2' to restore the check_web tool.",
+        ImportWarning, stacklevel=1
+    )
+    def check_web(*a, **kw):
+        raise RuntimeError(
+            "check_web is unavailable: langchain-text-splitters failed to import (numpy 2.0 incompatibility). "
+            "Run: pip install 'numpy<2' to fix."
+        )
+    check_web_tool = None
 from .tools.classify_function import classify_function, classify_function_plus
 from .tools.classify_persona import classify_persona, classify_persona_plus
 from .tools.clear_file import clear_file
@@ -498,7 +513,7 @@ class Chat:
                 openai_client = azure
             new_message = {"role": "user", "content": user_prompt}
             history.append(new_message)
-            print(history)
+            # debug print removed (issue #217): print(history)
             reasoning_content = ""
             if tools is not None:
                 response = create_openai_chat_completion(openai_client, 
@@ -877,7 +892,7 @@ class aisuite_Chat:
                     break
             new_message = {"role": "user", "content": user_prompt}
             history.append(new_message)
-            print(history)
+            # debug print removed (issue #217): print(history)
             reasoning_content = ""
             if tools is not None:
                 response = create_openai_chat_completion(openai_client, 

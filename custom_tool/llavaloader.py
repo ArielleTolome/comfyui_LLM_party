@@ -1,4 +1,5 @@
 import datetime
+import gc
 import hashlib
 import locale
 import os
@@ -136,6 +137,13 @@ class easy_LLavaLoader:
         hash_value = hashlib.md5(str(datetime.datetime.now()).encode()).hexdigest()
         return hash_value
 class GGUFLoader:
+    def __init__(self):
+        self._llm = None
+        self._model_path = None
+        self._max_ctx = None
+        self._gpu_layers = None
+        self._n_threads = None
+
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -154,22 +162,39 @@ class GGUFLoader:
 
     CATEGORY = "大模型派对（llm_party）/模型加载器（model loader）"
 
-    def load_GGUF_checkpoint(self, model_path, max_ctx, gpu_layers, n_threads,is_locked):
+    def load_GGUF_checkpoint(self, model_path, max_ctx, gpu_layers, n_threads, is_locked):
         self.is_locked = is_locked
         if self.is_locked == False:
             setattr(GGUFLoader, "IS_CHANGED", GGUFLoader.original_IS_CHANGED)
         else:
-            # 如果方法存在，则删除
             if hasattr(GGUFLoader, "IS_CHANGED"):
                 delattr(GGUFLoader, "IS_CHANGED")
-        from llama_cpp import Llama
-        llm = Llama(
-            model_path,
-            n_ctx=max_ctx,
-            n_gpu_layers=gpu_layers,
-            n_threads=n_threads,
+        settings_changed = (
+            self._model_path != model_path
+            or self._max_ctx != max_ctx
+            or self._gpu_layers != gpu_layers
+            or self._n_threads != n_threads
         )
-        return (llm,)
+        if self._llm is None or settings_changed:
+            # Release previous model to free VRAM (fix #206)
+            if self._llm is not None:
+                del self._llm
+                self._llm = None
+                gc.collect()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+            from llama_cpp import Llama
+            self._llm = Llama(
+                model_path,
+                n_ctx=max_ctx,
+                n_gpu_layers=gpu_layers,
+                n_threads=n_threads,
+            )
+            self._model_path = model_path
+            self._max_ctx = max_ctx
+            self._gpu_layers = gpu_layers
+            self._n_threads = n_threads
+        return (self._llm,)
     @classmethod
     def original_IS_CHANGED(s):
         # 生成当前时间的哈希值
@@ -177,6 +202,13 @@ class GGUFLoader:
         return hash_value
 
 class easy_GGUFLoader:
+    def __init__(self):
+        self._llm = None
+        self._model_path = None
+        self._max_ctx = None
+        self._gpu_layers = None
+        self._n_threads = None
+
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -200,18 +232,35 @@ class easy_GGUFLoader:
         if self.is_locked == False:
             setattr(easy_GGUFLoader, "IS_CHANGED", easy_GGUFLoader.original_IS_CHANGED)
         else:
-            # 如果方法存在，则删除
             if hasattr(easy_GGUFLoader, "IS_CHANGED"):
                 delattr(easy_GGUFLoader, "IS_CHANGED")
-        from llama_cpp import Llama
-        model_path=os.path.join(LLM_GGUF_dir, model_path)
-        llm = Llama(
-            model_path,
-            n_ctx=max_ctx,
-            n_gpu_layers=gpu_layers,
-            n_threads=n_threads,
+        full_model_path = os.path.join(LLM_GGUF_dir, model_path)
+        settings_changed = (
+            self._model_path != full_model_path
+            or self._max_ctx != max_ctx
+            or self._gpu_layers != gpu_layers
+            or self._n_threads != n_threads
         )
-        return (llm,)
+        if self._llm is None or settings_changed:
+            # Release previous model to free VRAM (fix #206)
+            if self._llm is not None:
+                del self._llm
+                self._llm = None
+                gc.collect()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+            from llama_cpp import Llama
+            self._llm = Llama(
+                full_model_path,
+                n_ctx=max_ctx,
+                n_gpu_layers=gpu_layers,
+                n_threads=n_threads,
+            )
+            self._model_path = full_model_path
+            self._max_ctx = max_ctx
+            self._gpu_layers = gpu_layers
+            self._n_threads = n_threads
+        return (self._llm,)
     @classmethod
     def original_IS_CHANGED(s):
         # 生成当前时间的哈希值
