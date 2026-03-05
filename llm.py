@@ -2024,7 +2024,7 @@ class LLM_local_loader:
 
             if config.model_type == "t5":
                 self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name_or_path, **model_kwargs)
-            elif config.model_type in ["gpt2", "gpt_refact", "gemma", "llama", "mistral", "qwen2", "chatglm"]:
+            elif config.model_type in ["gpt2", "gpt_refact", "gemma", "llama", "mistral", "qwen2", "qwen3", "chatglm"]:
                 self.model = AutoModelForCausalLM.from_pretrained(model_name_or_path, **model_kwargs)
             else:
                 raise ValueError(f"Unsupported model type: {config.model_type}")
@@ -2143,7 +2143,7 @@ class easy_LLM_local_loader:
 
             if config.model_type == "t5":
                 self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name_or_path, **model_kwargs)
-            elif config.model_type in ["gpt2", "gpt_refact", "gemma", "llama", "mistral", "qwen2", "chatglm"]:
+            elif config.model_type in ["gpt2", "gpt_refact", "gemma", "llama", "mistral", "qwen2", "qwen3", "chatglm"]:
                 self.model = AutoModelForCausalLM.from_pretrained(model_name_or_path, **model_kwargs)
             else:
                 raise ValueError(f"Unsupported model type: {config.model_type}")

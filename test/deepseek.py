@@ -9,7 +9,7 @@ from transformers import AutoModelForCausalLM
 from janus.models import MultiModalityCausalLM, VLChatProcessor
 from janus.utils.io import load_pil_images
 # specify the path to the model
-model_path = "D:\AI\mychat\model\Janus-Pro-1B"
+model_path = r"D:\AI\mychat\model\Janus-Pro-1B"
 vl_chat_processor: VLChatProcessor = VLChatProcessor.from_pretrained(model_path)
 tokenizer = vl_chat_processor.tokenizer
 
@@ -18,7 +18,7 @@ vl_gpt: MultiModalityCausalLM = AutoModelForCausalLM.from_pretrained(
 )
 vl_gpt = vl_gpt.to(torch.bfloat16).cuda().eval()
 question = "What is the main subject of this image?"
-image = "D:\AI\AIhuitu\Blender_ComfyUI\Blender_ComfyUI_Mini\ComfyUI\input\example.png"
+image = r"D:\AI\AIhuitu\Blender_ComfyUI\Blender_ComfyUI_Mini\ComfyUI\input\example.png"
 conversation = [
     {
         "role": "<|User|>",

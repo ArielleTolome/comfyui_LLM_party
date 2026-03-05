@@ -4,11 +4,11 @@ import torch
 
 # 加载模型和处理器
 model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
-    "D:\AI\mychat\model\Qwen2.5-VL-3B-Instruct", 
-    torch_dtype="auto", 
+    r"D:\AI\mychat\model\Qwen2.5-VL-3B-Instruct",
+    torch_dtype="auto",
     device_map="auto"
 )
-processor = AutoProcessor.from_pretrained("D:\AI\mychat\model\Qwen2.5-VL-3B-Instruct")
+processor = AutoProcessor.from_pretrained(r"D:\AI\mychat\model\Qwen2.5-VL-3B-Instruct")
 
 def process_image_and_text(image, text_prompt):
     if image is None:
