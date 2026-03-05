@@ -15,7 +15,9 @@ The original repo's last commit was **Sep 8, 2025**. This fork aims to:
 
 ### Bug Fixes
 - [x] Fixed SyntaxWarning: invalid escape sequences in `llm.py` (Windows path strings)
-- [ ] Fix #227: Ollama streaming returns empty string in ComfyUI output
+- [x] Fix #227: Ollama streaming returns empty string in ComfyUI output
+- [x] Fix #219: `expected string or bytes-like object, got 'NoneType'` with Gemini
+- [x] Fix #187 + #204: Widget validation errors on old workflows (`is_enable_system_role`, `conversation_rounds`, `historical_record` coercion)
 - [ ] Fix #222: numpy 2.0 compatibility (`np.float_` → `np.float64`)
 - [ ] Fix #224: macOS install issues
 
